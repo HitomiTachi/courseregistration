@@ -2,10 +2,68 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
 		th:replace="~{layout/main :: siteLayout ('Home', 'home', ~{::content})}">
 <body>
-<div th:fragment="content">
-	<main class="container py-5">
-		<h1 class="h3">Welcome</h1>
-		<p class="text-muted">Browse <a th:href="@{/courses}">available courses</a> or use the search box above.</p>
+<div th:fragment="content" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<main class="container py-4 py-md-5">
+		<h1 class="h3 mb-2">Home</h1>
+		<p class="text-muted small mb-4" th:if="${searchActive}">
+			Search results for &ldquo;<span th:text="${q}">keyword</span>&rdquo;
+			· <a th:href="@{/home}">Clear search</a>
+		</p>
+		<div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">OK</div>
+		<div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">Error</div>
+		<div th:if="${coursePage.isEmpty() and searchActive}" class="alert alert-warning">No courses match your search.</div>
+		<div th:if="${coursePage.isEmpty() and !searchActive}" class="alert alert-secondary">No courses available yet.</div>
+		<div class="row row-cols-1 row-cols-md-2 g-4" th:if="${!coursePage.isEmpty()}">
+			<div class="col" th:each="course : ${coursePage.content}">
+				<div class="card h-100 shadow-sm">
+					<div class="row g-0">
+						<div class="col-4 col-md-3">
+							<img th:if="${course.image != null and !course.image.isEmpty()}" class="img-fluid rounded-start h-100 object-fit-cover w-100" style="min-height: 120px;" th:src="${course.image}" alt="Course image"/>
+							<div th:unless="${course.image != null and !course.image.isEmpty()}" class="bg-secondary-subtle d-flex align-items-center justify-content-center h-100 rounded-start" style="min-height: 120px;">
+								<span class="text-muted small">No image</span>
+							</div>
+						</div>
+						<div class="col-8 col-md-9">
+							<div class="card-body">
+								<h2 class="card-title h5 mb-1" th:text="${course.name}">Name</h2>
+								<p class="card-text small text-muted mb-1" th:text="${course.lecturer}">Lecturer</p>
+								<p class="card-text small mb-1">
+									<span class="badge text-bg-light border" th:text="|${course.credits} credits|">0 credits</span>
+									<span class="badge text-bg-info" th:if="${course.category != null}" th:text="${course.category.name}">Category</span>
+								</p>
+								<div class="mt-2 d-flex flex-wrap align-items-center gap-2">
+									<form sec:authorize="hasRole('STUDENT')" th:action="@{/enroll/{id}(id=${course.id})}" method="post" class="d-inline">
+										<input type="hidden" name="page" th:value="${coursePage.number}"/>
+										<input type="hidden" name="q" th:if="${searchActive}" th:value="${q}"/>
+										<button type="submit" class="btn btn-sm btn-primary">Enroll</button>
+									</form>
+									<a sec:authorize="!isAuthenticated()" class="btn btn-sm btn-outline-secondary" th:href="@{/login}">Login to enroll</a>
+									<span sec:authorize="isAuthenticated() and !hasRole('STUDENT')" class="small text-muted">Only students can enroll.</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<nav th:if="${coursePage.totalPages > 1}" class="mt-4" aria-label="Course pagination">
+			<ul class="pagination flex-wrap justify-content-center mb-0">
+				<li class="page-item" th:classappend="${coursePage.first} ? 'disabled'">
+					<a class="page-link" th:href="@{/home(page=${coursePage.number - 1},q=${q})}" th:tabindex="${coursePage.first} ? -1 : 0">Previous</a>
+				</li>
+				<li class="page-item" th:each="p : ${#numbers.sequence(0, coursePage.totalPages - 1)}"
+					th:classappend="${p == coursePage.number} ? 'active'">
+					<a class="page-link" th:href="@{/home(page=${p},q=${q})}" th:text="${p + 1}">1</a>
+				</li>
+				<li class="page-item" th:classappend="${coursePage.last} ? 'disabled'">
+					<a class="page-link" th:href="@{/home(page=${coursePage.number + 1},q=${q})}" th:tabindex="${coursePage.last} ? -1 : 0">Next</a>
+				</li>
+			</ul>
+		</nav>
+		<p class="text-center text-muted small mt-3 mb-0" th:if="${!coursePage.isEmpty()}">
+			Page <span th:text="${coursePage.number + 1}">1</span> of <span th:text="${coursePage.totalPages}">1</span>
+			(<span th:text="${coursePage.totalElements}">0</span> courses)
+		</p>
 	</main>
 </div>
 </body>

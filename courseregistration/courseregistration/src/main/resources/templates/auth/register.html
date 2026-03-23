@@ -7,10 +7,10 @@
 		<div class="row justify-content-center">
 			<div class="col-12 col-md-8 col-lg-5">
 				<h1 class="h4 mb-4">Create account</h1>
-				<div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" role="alert">
-					<span th:each="e : ${#fields.globalErrors()}" th:text="${e}">Error</span>
-				</div>
 				<form th:action="@{/register}" th:object="${registerForm}" method="post" class="card card-body shadow-sm" novalidate>
+					<div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" role="alert">
+						<span th:each="e : ${#fields.globalErrors()}" th:text="${e}">Error</span>
+					</div>
 					<div class="mb-3">
 						<label class="form-label" for="username">Username</label>
 						<input class="form-control" id="username" th:field="*{username}" type="text" autocomplete="username" required/>
